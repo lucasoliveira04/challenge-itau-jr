@@ -16,19 +16,6 @@ import java.util.Map;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(TransacaoInvalidaException.class)
-    public ResponseEntity<ErrorResponse> handleTransacaoInvalida(TransacaoInvalidaException ex, HttpServletRequest request) {
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.UNPROCESSABLE_ENTITY.value(),
-                "Transação inválida",
-                ex.getMessage(),
-                request.getRequestURI(),
-                OffsetDateTime.now()
-        );
-        log.warn("Transação inválida: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error);
-    }
-
     @ExceptionHandler(HttpClientErrorException.UnprocessableEntity.class)
     public ResponseEntity<ErrorResponse> handleUnprocessable(HttpClientErrorException.UnprocessableEntity ex, HttpServletRequest request) {
         ErrorResponse error = new ErrorResponse(

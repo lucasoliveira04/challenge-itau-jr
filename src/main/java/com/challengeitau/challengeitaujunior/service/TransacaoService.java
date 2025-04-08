@@ -1,5 +1,6 @@
 package com.challengeitau.challengeitaujunior.service;
 
+import com.challengeitau.challengeitaujunior.dto.ErrorResponse;
 import com.challengeitau.challengeitaujunior.dto.TransacaoDto;
 import com.challengeitau.challengeitaujunior.exception.TransacaoInvalidaException;
 import com.challengeitau.challengeitaujunior.modal.Transaction;
@@ -15,13 +16,15 @@ import java.time.OffsetDateTime;
 @Service
 public class TransacaoService {
     private final TransactionRepositoryInMemory transactionRepositoryInMemory;
+    private final TransacaoValidator transacaoValidator;
 
-    public TransacaoService(TransactionRepositoryInMemory transactionRepositoryInMemory) {
+    public TransacaoService(TransactionRepositoryInMemory transactionRepositoryInMemory, TransacaoValidator transacaoValidator) {
         this.transactionRepositoryInMemory = transactionRepositoryInMemory;
+        this.transacaoValidator = transacaoValidator;
     }
 
     public ResponseEntity<?> save(TransacaoDto transacaoDto){
-        validarTransacao(transacaoDto);
+        transacaoValidator.validar(transacaoDto);
 
         Transaction transaction = new Transaction();
         transaction.setValor(transacaoDto.valor());
@@ -32,23 +35,6 @@ public class TransacaoService {
         log.info("Transação salva com sucesso");
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-    private void validarTransacao(TransacaoDto transacaoDto){
-        if (transacaoDto.valor() < 0) {
-            throw new TransacaoInvalidaException("O valor da transação não pode ser negativo");
-        }
-        if (transacaoDto.dataHora().isAfter(OffsetDateTime.now())) {
-            throw new TransacaoInvalidaException("A data da transação não pode ser futura");
-        }
-        if (!hasTwoOrFewerDecimalPlaces(transacaoDto.valor())) {
-            throw new TransacaoInvalidaException("O valor da transação deve ter no máximo duas casas decimais");
-        }
-    }
-
-    private boolean hasTwoOrFewerDecimalPlaces(Double valor){
-        String[] parts = String.valueOf(valor).split("\\.");
-        return parts.length < 2 || parts[1].length() <= 2;
     }
 
     public ResponseEntity<?> deleteAllTransactions(){

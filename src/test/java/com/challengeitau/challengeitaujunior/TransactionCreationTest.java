@@ -1,8 +1,10 @@
 package com.challengeitau.challengeitaujunior;
 
 import com.challengeitau.challengeitaujunior.dto.TransacaoDto;
+import com.challengeitau.challengeitaujunior.exception.TransacaoInvalidaException;
 import com.challengeitau.challengeitaujunior.modal.TransactionRepositoryInMemory;
 import com.challengeitau.challengeitaujunior.service.TransacaoService;
+import com.challengeitau.challengeitaujunior.service.TransacaoValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
@@ -10,42 +12,47 @@ import org.springframework.http.ResponseEntity;
 import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TransactionCreationTest {
 
     private TransacaoService transacaoService;
     private TransactionRepositoryInMemory transactionRepositoryInMemory;
+    private TransacaoValidator transacaoValidator;
 
     @BeforeEach
     void setup() {
         transactionRepositoryInMemory = new TransactionRepositoryInMemory();
-        transacaoService = new TransacaoService(transactionRepositoryInMemory);
+        transacaoValidator = new TransacaoValidator();
+        transacaoService = new TransacaoService(transactionRepositoryInMemory, transacaoValidator);
     }
 
     @Test
-    void shouldReturn422WhenValueIsNegative() {
+    void shouldThrowExceptionWhenValueIsNegative() {
         TransacaoDto transacaoDto = new TransacaoDto(-10.0, OffsetDateTime.now());
-        ResponseEntity<?> response = transacaoService.save(transacaoDto);
 
-        assertEquals(422, response.getStatusCodeValue());
+        assertThrows(TransacaoInvalidaException.class, () -> {
+            transacaoService.save(transacaoDto);
+        });
     }
 
     @Test
-    void shoudReturn422WhenDataHoraIsFuture(){
+    void shouldThrowExceptionWhenDataHoraIsFuture() {
         OffsetDateTime future = OffsetDateTime.now().plusDays(1);
-
         TransacaoDto transacaoDto = new TransacaoDto(100.0, future);
-        ResponseEntity<?> response = transacaoService.save(transacaoDto);
 
-        assertEquals(422, response.getStatusCodeValue());
+        assertThrows(TransacaoInvalidaException.class, () -> {
+            transacaoService.save(transacaoDto);
+        });
     }
 
     @Test
-    void shouldReturn422WhenValueHasMoreThanTwoDecimalPlaces() {
+    void shouldThrowExceptionWhenValueHasMoreThanTwoDecimalPlaces() {
         TransacaoDto transacaoDto = new TransacaoDto(10.123, OffsetDateTime.now());
-        ResponseEntity<?> response = transacaoService.save(transacaoDto);
 
-        assertEquals(422, response.getStatusCodeValue());
+        assertThrows(TransacaoInvalidaException.class, () -> {
+            transacaoService.save(transacaoDto);
+        });
     }
 
     @Test

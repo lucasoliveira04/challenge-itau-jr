@@ -21,11 +21,13 @@ public class EstatisticaService {
         this.transactionRepositoryInMemory = transactionRepositoryInMemory;
     }
 
-    public ResponseEntity<?> getEstatistica() {
+    public ResponseEntity<?> getEstatistica(int time) {
         log.info("Calculando estatísticas das transações dos últimos 60 segundos");
 
+        long inicio = System.nanoTime();
+
         List<Transaction> transacoesRecentes = transactionRepositoryInMemory.getTransactions().stream()
-                .filter(t -> t.getDataHora().isAfter(OffsetDateTime.now().minusSeconds(60)))
+                .filter(t -> t.getDataHora().isAfter(OffsetDateTime.now().minusSeconds(time)))
                 .toList();
 
         int count = transacoesRecentes.size();
@@ -47,6 +49,10 @@ public class EstatisticaService {
                 .orElse(0.0));
 
         EstatisticaDto estatisticaDto = new EstatisticaDto(count, sum, avg, min, max);
+
+        long fim = System.nanoTime();
+        long duracaoEmMicros = (fim - inicio) / 1_000;
+        System.out.println("Tempo para calcular estatísticas: " + duracaoEmMicros + " μs");
 
         log.info("Estatísticas calculadas: {}", estatisticaDto);
         return ResponseEntity.ok().body(estatisticaDto);

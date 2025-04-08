@@ -1,6 +1,7 @@
 package com.challengeitau.challengeitaujunior.service;
 
 import com.challengeitau.challengeitaujunior.dto.TransacaoDto;
+import com.challengeitau.challengeitaujunior.exception.TransacaoInvalidaException;
 import com.challengeitau.challengeitaujunior.modal.Transaction;
 import com.challengeitau.challengeitaujunior.modal.TransactionRepositoryInMemory;
 import lombok.extern.slf4j.Slf4j;
@@ -20,21 +21,29 @@ public class TransacaoService {
     }
 
     public ResponseEntity<?> save(TransacaoDto transacaoDto){
-        Transaction transaction = new Transaction();
+        validarTransacao(transacaoDto);
 
+        Transaction transaction = new Transaction();
         transaction.setValor(transacaoDto.valor());
         transaction.setDataHora(transacaoDto.dataHora());
-
-        if (transacaoDto.valor() < 0
-                || transacaoDto.dataHora().isAfter(OffsetDateTime.now())
-                || !hasTwoOrFewerDecimalPlaces(transacaoDto.valor())){
-            return ResponseEntity.unprocessableEntity().build();
-        }
 
         log.info("Salvando transação: {}", transacaoDto);
         transactionRepositoryInMemory.save(transaction);
         log.info("Transação salva com sucesso");
+
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    private void validarTransacao(TransacaoDto transacaoDto){
+        if (transacaoDto.valor() < 0) {
+            throw new TransacaoInvalidaException("O valor da transação não pode ser negativo");
+        }
+        if (transacaoDto.dataHora().isAfter(OffsetDateTime.now())) {
+            throw new TransacaoInvalidaException("A data da transação não pode ser futura");
+        }
+        if (!hasTwoOrFewerDecimalPlaces(transacaoDto.valor())) {
+            throw new TransacaoInvalidaException("O valor da transação deve ter no máximo duas casas decimais");
+        }
     }
 
     private boolean hasTwoOrFewerDecimalPlaces(Double valor){
